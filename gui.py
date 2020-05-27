@@ -81,16 +81,17 @@ class PageOne(tk.Frame):
                     JSYNCC_TOKENS[line] = 1
             f.close()
 
-        dframe = DataFrame(JSYNCC_TOKENS.items(), columns=['Token', 'Frequency'])
+        sorted_jsnycc = {k: v for k, v in sorted(JSYNCC_TOKENS.items(), key=lambda item: item[1], reverse=True)}
+        dframe = DataFrame({A: N for (A, N) in [x for x in sorted_jsnycc.items()][:20]}.items(), columns=['Token', 'Frequency'])
         f = plt.Figure(figsize=(6, 6))
-        a = f.add_subplot(111)
-        dframe = dframe[['Token', 'Frequency']].groupby('Token').sum()
+        a = f.add_subplot(1,1,1)
+        dframe = dframe[['Token', 'Frequency']].groupby(['Token'], sort=False).sum()
         dframe.plot(kind='bar', legend=True, ax=a)
 
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        
+
 
 
 
