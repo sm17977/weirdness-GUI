@@ -23,6 +23,7 @@ class MainWindow(tk.Tk):
 
         tk.Tk.iconbitmap(self, default="index.ico")
         tk.Tk.wm_title(self, "Test Window")
+        self.geometry("800x400")
 
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
@@ -42,12 +43,19 @@ class MainWindow(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
+    def grid_conf(self, frame):
+        for x in range(2):
+            frame.grid_rowconfigure(self, x, weight=1)
+        for y in range(3):
+            frame.grid_columnconfigure(self, y, weight=1)
+
+
 
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Homepage", font=LARGE_FONT)
-        label.pack(pady=10,padx=10)
+        label = tk.Label(self, text="Corpora Statistics", font=LARGE_FONT)
+        label.grid(row=0, column=0, sticky="nsew", columnspan=3, pady=(0,0))
 
         btn = ttk.Button(self, text="Jsyncc Stats",
                         command=lambda: controller.show_frame(PageOne))
@@ -55,22 +63,34 @@ class StartPage(tk.Frame):
                         command=lambda: controller.show_frame(PageTwo))
         btn3 = ttk.Button(self, text="Weirdness",
                         command=lambda: controller.show_frame(PageThree))
-        btn.pack()
-        btn2.pack()
-        btn3.pack()
+        btn.grid(row=1, column=0, sticky="nsew", padx=(5,5), pady=(0,20))
+        btn2.grid(row=1, column=1, sticky="nsew", padx=(5,5), pady=(0,20))
+        btn3.grid(row=1, column=2, sticky="nsew", padx=(5,5), pady=(0,20))
+
+        MainWindow.grid_conf(self, tk.Frame)
 
 
 class PageOne(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Jsyncc Stats", font=LARGE_FONT)
-        label.pack(pady=10,padx=10)
+        label.grid(row=0, column=0, sticky="nsew", columnspan=3, pady=(0,5))
+
         btn = ttk.Button(self, text="Return",
                         command=lambda: controller.show_frame(StartPage))
         btn2 = ttk.Button(self, text="DeReKo Stats",
                         command=lambda: controller.show_frame(PageTwo))
-        btn.pack()
-        btn2.pack()
+        btn3 = ttk.Button(self, text="Weirdness",
+                        command=lambda: controller.show_frame(PageThree))
+        txtbox = ttk.Entry(self, width=5)
+
+        btn.grid(row=1, column=0, sticky="nsew", padx=(5, 5), pady=(5, 5))
+        btn2.grid(row=1, column=1, sticky="nsew", padx=(5, 5), pady=(5, 5))
+        btn3.grid(row=1, column=2, sticky="nsew", padx=(5, 5), pady=(5, 5))
+        txtbox.grid(row=2, column=1, sticky="nsew", padx=(5, 5), pady=(5, 5))
+
+
+
 
         # Store Jsnycc tokens in a dictionary with key as token and value as frequency
         with open(JSYNCC_FILE_NAME, buffering=1000000, encoding="utf-8") as f:
@@ -82,15 +102,17 @@ class PageOne(tk.Frame):
             f.close()
 
         sorted_jsnycc = {k: v for k, v in sorted(JSYNCC_TOKENS.items(), key=lambda item: item[1], reverse=True)}
-        dframe = DataFrame({A: N for (A, N) in [x for x in sorted_jsnycc.items()][:20]}.items(), columns=['Token', 'Frequency'])
-        f = plt.Figure(figsize=(6, 6))
+        dframe = DataFrame({A: N for (A, N) in [x for x in sorted_jsnycc.items()][:10]}.items(), columns=['Token', 'Frequency'])
+        f = plt.Figure(figsize=(3, 3))
         a = f.add_subplot(1,1,1)
         dframe = dframe[['Token', 'Frequency']].groupby(['Token'], sort=False).sum()
-        dframe.plot(kind='bar', legend=True, ax=a)
+        dframe.plot(kind='bar', legend=True, ax=a, rot=0)
 
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        canvas.get_tk_widget().grid(row=3, column=1, sticky="nsew", padx=(5, 5), pady=(5, 5))
+
+        MainWindow.grid_conf(self, tk.Frame)
 
 
 
@@ -106,6 +128,7 @@ class PageTwo(tk.Frame):
                         command=lambda: controller.show_frame(PageOne))
         btn.pack()
         btn2.pack()
+
 
 class PageThree(tk.Frame):
     def __init__(self, parent, controller):
@@ -130,7 +153,6 @@ class PageThree(tk.Frame):
         toolbar = NavigationToolbar2Tk(canvas,self)
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
 
 
 app = MainWindow()
