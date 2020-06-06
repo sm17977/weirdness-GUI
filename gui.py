@@ -16,6 +16,7 @@ DEREKO_TOKENS = {}
 JSYNCC_TOKENS = {}
 
 
+
 class MainWindow(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -71,8 +72,16 @@ class StartPage(tk.Frame):
 
 
 class PageOne(tk.Frame):
+
+    with open(JSYNCC_FILE_NAME, buffering=20000000, encoding="utf-8") as f:
+        freq = FreqDist(json.loads(f.read()))
+
+
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+
+
+
         label = tk.Label(self, text="Jsyncc Stats", font=LARGE_FONT)
         label.pack()
 
@@ -92,11 +101,7 @@ class PageOne(tk.Frame):
         btn4.pack(side=tk.TOP)
         txtbox.pack(side=tk.TOP)
 
-        # Store Jsnycc tokens in a dictionary with key as token and value as frequency
-        with open(JSYNCC_FILE_NAME, buffering=20000000, encoding="utf-8") as f:
-            freq = FreqDist(json.loads(f.read()))
-
-        df1 = DataFrame(freq.most_common(10), columns=['Token', 'Frequency'])
+        df1 = DataFrame(self.freq.most_common(10), columns=['Token', 'Frequency'])
         fig, ax1 = plt.subplots(nrows=1, ncols=1,figsize=(4.5, 3))
         df1 = df1[['Token', 'Frequency']].groupby(['Token'], sort=False).sum()
         df1.plot(kind='bar', legend=True, ax=ax1, rot=0)
@@ -180,6 +185,9 @@ class PageThree(tk.Frame):
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 class PageFour(tk.Frame):
+
+    freq = PageOne.freq
+
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
@@ -195,16 +203,26 @@ class PageFour(tk.Frame):
         f = Figure(figsize=(8, 5), dpi=100)
         ax = f.add_subplot(111)
 
+        top_100 = [x[0] for x in self.freq.most_common(100)]
+        top_10_batches = [top_100[idx:idx+10] for idx in range(0,100,10)]
 
+        bf = [[''.join(x)] for x in top_10_batches]
+        bd = []
+        for x in bf:
+            for y in x:
+                bd.append([','.join(y.lower().splitlines())])
+
+
+        print(bd)
 
         # Placeholder table data
         col_labels = ['Batches of 10', 'Relative Frequency', 'Open Class Words']
-        table_vals = [['der,die,das,beim,von,dem,einem.vom,ein,einer', 'die', 'das'], [21, 22, 23], [31, 32, 33], [11, 12, 13], [21, 22, 23], [31, 32, 33], [31, 32, 33],
-                      [11, 12, 13], [21, 22, 23], [31, 32, 33], [31, 32, 33]]
+        table_vals = bd
 
         table = ax.table(cellText=table_vals,
                           colWidths=[0.1] * 11,
                           colLabels=col_labels,
+                          cellLoc='center',
                           loc='center')
         table.auto_set_font_size(False)
         table.set_fontsize(8)
