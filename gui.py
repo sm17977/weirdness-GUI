@@ -1,17 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
+from nltk import FreqDist
+import json
 import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-import numpy as np
-from collections import Counter
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 
 LARGE_FONT = ("Verdana", 12)
-DEREKO_FILE_NAME = 'dereko_tokens.txt'
-JSYNCC_FILE_NAME = 'all_jsyncc_tokens.txt'
+DEREKO_FILE_NAME = 'dereko_freq.txt'
+JSYNCC_FILE_NAME = 'jsyncc_freq.txt'
 DEREKO_TOKENS = {}
 JSYNCC_TOKENS = {}
 
@@ -23,7 +23,7 @@ class MainWindow(tk.Tk):
 
         tk.Tk.iconbitmap(self, default="index.ico")
         tk.Tk.wm_title(self, "Test Window")
-        self.geometry("800x400")
+        self.geometry("1000x500")
 
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
@@ -32,7 +32,7 @@ class MainWindow(tk.Tk):
 
         self.frames = {}
 
-        for f in (StartPage, PageOne, PageTwo, PageThree):
+        for f in (StartPage, PageOne, PageTwo, PageThree, PageFour):
             frame = f(container,self)
             self.frames[f] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -74,7 +74,7 @@ class PageOne(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Jsyncc Stats", font=LARGE_FONT)
-        label.grid(row=0, column=0, sticky="nsew", columnspan=3, pady=(0,5))
+        label.pack()
 
         btn = ttk.Button(self, text="Return",
                         command=lambda: controller.show_frame(StartPage))
@@ -82,35 +82,32 @@ class PageOne(tk.Frame):
                         command=lambda: controller.show_frame(PageTwo))
         btn3 = ttk.Button(self, text="Weirdness",
                         command=lambda: controller.show_frame(PageThree))
+        btn4 = ttk.Button(self, text="Open Class Words Table",
+                        command=lambda: controller.show_frame(PageFour))
         txtbox = ttk.Entry(self, width=5)
 
-        btn.grid(row=1, column=0, sticky="nsew", padx=(5, 5), pady=(5, 5))
-        btn2.grid(row=1, column=1, sticky="nsew", padx=(5, 5), pady=(5, 5))
-        btn3.grid(row=1, column=2, sticky="nsew", padx=(5, 5), pady=(5, 5))
-        txtbox.grid(row=2, column=1, sticky="nsew", padx=(5, 5), pady=(5, 5))
-
-
-
+        btn.pack(side=tk.TOP)
+        btn2.pack(side=tk.TOP)
+        btn3.pack(side=tk.TOP)
+        btn4.pack(side=tk.TOP)
+        txtbox.pack(side=tk.TOP)
 
         # Store Jsnycc tokens in a dictionary with key as token and value as frequency
-        with open(JSYNCC_FILE_NAME, buffering=1000000, encoding="utf-8") as f:
-            for line in f:
-                if line in JSYNCC_TOKENS:
-                    JSYNCC_TOKENS[line] = JSYNCC_TOKENS[line] + 1
-                else:
-                    JSYNCC_TOKENS[line] = 1
-            f.close()
+        with open(JSYNCC_FILE_NAME, buffering=20000000, encoding="utf-8") as f:
+            freq = FreqDist(json.loads(f.read()))
 
-        sorted_jsnycc = {k: v for k, v in sorted(JSYNCC_TOKENS.items(), key=lambda item: item[1], reverse=True)}
-        dframe = DataFrame({A: N for (A, N) in [x for x in sorted_jsnycc.items()][:10]}.items(), columns=['Token', 'Frequency'])
-        f = plt.Figure(figsize=(3, 3))
-        a = f.add_subplot(1,1,1)
-        dframe = dframe[['Token', 'Frequency']].groupby(['Token'], sort=False).sum()
-        dframe.plot(kind='bar', legend=True, ax=a, rot=0)
+        df1 = DataFrame(freq.most_common(10), columns=['Token', 'Frequency'])
+        fig, ax1 = plt.subplots(nrows=1, ncols=1,figsize=(4.5, 3))
+        df1 = df1[['Token', 'Frequency']].groupby(['Token'], sort=False).sum()
+        df1.plot(kind='bar', legend=True, ax=ax1, rot=0)
 
-        canvas = FigureCanvasTkAgg(f, self)
+
+        canvas = FigureCanvasTkAgg(fig, self)
         canvas.draw()
-        canvas.get_tk_widget().grid(row=3, column=1, sticky="nsew", padx=(5, 5), pady=(5, 5))
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+
 
         MainWindow.grid_conf(self, tk.Frame)
 
@@ -126,13 +123,40 @@ class PageTwo(tk.Frame):
                         command=lambda: controller.show_frame(StartPage))
         btn2 = ttk.Button(self, text="Jsyncc Stats",
                         command=lambda: controller.show_frame(PageOne))
-        btn.pack()
-        btn2.pack()
+        btn3 = ttk.Button(self, text="Weirdness",
+                        command=lambda: controller.show_frame(PageThree))
+        txtbox = ttk.Entry(self, width=5)
+
+        btn.pack(side=tk.TOP)
+        btn2.pack(side=tk.TOP)
+        btn3.pack(side=tk.TOP)
+        txtbox.pack(side=tk.TOP)
+
+
+        with open(DEREKO_FILE_NAME, buffering=20000000, encoding="utf-8") as f:
+            freq = FreqDist(json.loads(f.read()))
+
+        print("done")
+
+        df1 = DataFrame(freq.most_common(10), columns=['Token', 'Frequency'])
+        fig, ax1 = plt.subplots(nrows=1, ncols=1,figsize=(4.5, 3))
+        df1 = df1[['Token', 'Frequency']].groupby(['Token'], sort=False).sum()
+        df1.plot(kind='bar', legend=True, ax=ax1, rot=0)
+
+        canvas = FigureCanvasTkAgg(fig, self)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+
+
+
+        MainWindow.grid_conf(self, tk.Frame)
 
 
 class PageThree(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+
         label = tk.Label(self, text="Weirdness", font=LARGE_FONT)
         label.pack(pady=10,padx=10)
         btn = ttk.Button(self, text="Return",
@@ -146,6 +170,7 @@ class PageThree(tk.Frame):
         a = f.add_subplot(111)
         a.plot([1,2,3,4,5,6,7,8],[5,4,7,4,3,2,1,3])
 
+
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -153,6 +178,47 @@ class PageThree(tk.Frame):
         toolbar = NavigationToolbar2Tk(canvas,self)
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+class PageFour(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        label = tk.Label(self, text="Jsyncc Open Class Words", font=LARGE_FONT)
+        label.pack(pady=10,padx=10)
+        btn = ttk.Button(self, text="Return",
+                        command=lambda: controller.show_frame(StartPage))
+        btn2 = ttk.Button(self, text="Jsyncc Stats",
+                        command=lambda: controller.show_frame(PageOne))
+        btn.pack()
+        btn2.pack()
+
+        f = Figure(figsize=(8, 5), dpi=100)
+        ax = f.add_subplot(111)
+
+
+
+        # Placeholder table data
+        col_labels = ['Batches of 10', 'Relative Frequency', 'Open Class Words']
+        table_vals = [['der,die,das,beim,von,dem,einem.vom,ein,einer', 'die', 'das'], [21, 22, 23], [31, 32, 33], [11, 12, 13], [21, 22, 23], [31, 32, 33], [31, 32, 33],
+                      [11, 12, 13], [21, 22, 23], [31, 32, 33], [31, 32, 33]]
+
+        table = ax.table(cellText=table_vals,
+                          colWidths=[0.1] * 11,
+                          colLabels=col_labels,
+                          loc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(8)
+        table.scale(2, 2)
+        table.auto_set_column_width(col=list(range(len(col_labels))))
+        ax.set_axis_off()
+
+        plt.subplots_adjust(left=0.2, bottom=0.2, top=1)
+
+        canvas = FigureCanvasTkAgg(f, self)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+
 
 
 app = MainWindow()
