@@ -210,12 +210,15 @@ class PageFour(tk.Frame):
         bd = []
         for x in bf:
             for y in x:
-                bd.append([','.join(y.lower().splitlines())])
+                a = ','.join(y.lower().splitlines())
+                b = '%'
+                c = '0'
+                bd.append([a, b, c])
+
 
 
         print(bd)
 
-        # Placeholder table data
         col_labels = ['Batches of 10', 'Relative Frequency', 'Open Class Words']
         table_vals = bd
 
