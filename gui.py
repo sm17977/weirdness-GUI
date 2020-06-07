@@ -76,6 +76,10 @@ class PageOne(tk.Frame):
     with open(JSYNCC_FILE_NAME, buffering=20000000, encoding="utf-8") as f:
         freq = FreqDist(json.loads(f.read()))
 
+    freq_length = 0
+    for x in freq:
+        freq_length += freq[x]
+
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -187,6 +191,13 @@ class PageThree(tk.Frame):
 class PageFour(tk.Frame):
 
     freq = PageOne.freq
+    freq_length = PageOne.freq_length
+
+    def get_relative_freq(self,top_100):
+        relative_freq = [[x/self.freq_length for x in y] for y in top_100]
+        sums = list(map(sum,relative_freq))
+        return [x*100 for x in sums]
+
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -203,23 +214,34 @@ class PageFour(tk.Frame):
         f = Figure(figsize=(8, 5), dpi=100)
         ax = f.add_subplot(111)
 
+
+        relative_freq = [x[1] for x in self.freq.most_common(100)]
+        top_100_freq = [relative_freq[idx:idx+10] for idx in range(0,100,10)]
         top_100 = [x[0] for x in self.freq.most_common(100)]
         top_10_batches = [top_100[idx:idx+10] for idx in range(0,100,10)]
+        result = self.get_relative_freq(top_100_freq)
+        sum = 0
+        count = 0
+
 
         bf = [[''.join(x)] for x in top_10_batches]
         bd = []
         for x in bf:
             for y in x:
+
                 a = ','.join(y.lower().splitlines())
-                b = '%'
-                c = '0'
+                b = str(float(round(result[count], 2))) + '%'
+
+                c = ''
+
+                count += 1
                 bd.append([a, b, c])
 
 
 
-        print(bd)
+        print(result)
 
-        col_labels = ['Batches of 10', 'Relative Frequency', 'Open Class Words']
+        col_labels = ['Tokens organised in order of frequency in batches of 10 at a time', 'Relative Frequency', 'Open Class Words']
         table_vals = bd
 
         table = ax.table(cellText=table_vals,
