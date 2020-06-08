@@ -16,7 +16,6 @@ DEREKO_TOKENS = {}
 JSYNCC_TOKENS = {}
 
 
-
 class MainWindow(tk.Tk):
 
     def __init__(self, *args, **kwargs):
@@ -50,8 +49,6 @@ class MainWindow(tk.Tk):
         for y in range(3):
             frame.grid_columnconfigure(self, y, weight=1)
 
-
-
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -80,11 +77,8 @@ class PageOne(tk.Frame):
     for x in freq:
         freq_length += freq[x]
 
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-
-
 
         label = tk.Label(self, text="Jsyncc Stats", font=LARGE_FONT)
         label.pack()
@@ -110,18 +104,11 @@ class PageOne(tk.Frame):
         df1 = df1[['Token', 'Frequency']].groupby(['Token'], sort=False).sum()
         df1.plot(kind='bar', legend=True, ax=ax1, rot=0)
 
-
         canvas = FigureCanvasTkAgg(fig, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-
-
-
         MainWindow.grid_conf(self, tk.Frame)
-
-
-
 
 class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
@@ -141,11 +128,8 @@ class PageTwo(tk.Frame):
         btn3.pack(side=tk.TOP)
         txtbox.pack(side=tk.TOP)
 
-
         with open(DEREKO_FILE_NAME, buffering=20000000, encoding="utf-8") as f:
             freq = FreqDist(json.loads(f.read()))
-
-        print("done")
 
         df1 = DataFrame(freq.most_common(10), columns=['Token', 'Frequency'])
         fig, ax1 = plt.subplots(nrows=1, ncols=1,figsize=(4.5, 3))
@@ -155,9 +139,6 @@ class PageTwo(tk.Frame):
         canvas = FigureCanvasTkAgg(fig, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-
-
 
         MainWindow.grid_conf(self, tk.Frame)
 
@@ -179,7 +160,6 @@ class PageThree(tk.Frame):
         a = f.add_subplot(111)
         a.plot([1,2,3,4,5,6,7,8],[5,4,7,4,3,2,1,3])
 
-
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -190,12 +170,19 @@ class PageThree(tk.Frame):
 
 class PageFour(tk.Frame):
 
+    # Token frequency distribution dictionary
     freq = PageOne.freq
+    # Total tokens
     freq_length = PageOne.freq_length
 
+    # Returns list of the relative frequencies from batches of 10 tokens from the top 100
+    # Calculated by the sum of each token in one frequency batch and each frequency divided by the total tokens
     def get_relative_freq(self,top_100):
-        relative_freq = [[x/self.freq_length for x in y] for y in top_100]
-        sums = list(map(sum,relative_freq))
+        # List of batches of 10 frequencies each divided by the total tokens
+        divide_top_100 = [[x/self.freq_length for x in y] for y in top_100]
+        # List of each resulting batch summed
+        sums = list(map(sum,divide_top_100))
+        # Returns the list with percentage values
         return [x*100 for x in sums]
 
 
@@ -214,35 +201,36 @@ class PageFour(tk.Frame):
         f = Figure(figsize=(8, 5), dpi=100)
         ax = f.add_subplot(111)
 
+        # List of top 100 tokens - only frequencies
+        top_100_freq = [x[1] for x in self.freq.most_common(100)]
+        # List of lists of frequencies in batches of 10
+        batches_freq = [top_100_freq[idx:idx+10] for idx in range(0,100,10)]
+        # List of top 100 tokens - only tokens
+        top_100_tokens = [x[0] for x in self.freq.most_common(100)]
+        # List of lists of tokens in bacthes of 10
+        batches_tokens = [top_100_tokens[idx:idx+10] for idx in range(0,100,10)]
+        # List of relative frequencies in batches of 10
+        relative_freq = self.get_relative_freq(batches_freq)
 
-        relative_freq = [x[1] for x in self.freq.most_common(100)]
-        top_100_freq = [relative_freq[idx:idx+10] for idx in range(0,100,10)]
-        top_100 = [x[0] for x in self.freq.most_common(100)]
-        top_10_batches = [top_100[idx:idx+10] for idx in range(0,100,10)]
-        result = self.get_relative_freq(top_100_freq)
-        sum = 0
-        count = 0
+        # Index for relative frequencies
+        index = 0
 
+        join_batches = [[''.join(x)] for x in batches_tokens]
+        data = []
 
-        bf = [[''.join(x)] for x in top_10_batches]
-        bd = []
-        for x in bf:
+        # Append table data to list
+        for x in join_batches:
             for y in x:
-
                 a = ','.join(y.lower().splitlines())
-                b = str(float(round(result[count], 2))) + '%'
-
+                b = str(float(round(relative_freq[index], 2))) + '%'
                 c = ''
+                index += 1
+                data.append([a, b, c])
 
-                count += 1
-                bd.append([a, b, c])
-
-
-
-        print(result)
+        print(relative_freq)
 
         col_labels = ['Tokens organised in order of frequency in batches of 10 at a time', 'Relative Frequency', 'Open Class Words']
-        table_vals = bd
+        table_vals = data
 
         table = ax.table(cellText=table_vals,
                           colWidths=[0.1] * 11,
@@ -260,8 +248,6 @@ class PageFour(tk.Frame):
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
         canvas.get_tk_widget().pack()
-
-
 
 
 app = MainWindow()
