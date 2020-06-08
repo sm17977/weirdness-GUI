@@ -7,7 +7,9 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 from pandas import DataFrame
+import spacy
 
 LARGE_FONT = ("Verdana", 12)
 DEREKO_FILE_NAME = 'dereko_freq.txt'
@@ -67,7 +69,7 @@ class StartPage(tk.Frame):
 
         MainWindow.grid_conf(self, tk.Frame)
 
-
+# Jsyncc Stats
 class PageOne(tk.Frame):
 
     with open(JSYNCC_FILE_NAME, buffering=20000000, encoding="utf-8") as f:
@@ -85,18 +87,15 @@ class PageOne(tk.Frame):
 
         btn = ttk.Button(self, text="Return",
                         command=lambda: controller.show_frame(StartPage))
-        btn2 = ttk.Button(self, text="DeReKo Stats",
-                        command=lambda: controller.show_frame(PageTwo))
-        btn3 = ttk.Button(self, text="Weirdness",
+        btn2 = ttk.Button(self, text="Weirdness",
                         command=lambda: controller.show_frame(PageThree))
-        btn4 = ttk.Button(self, text="Open Class Words Table",
+        btn3 = ttk.Button(self, text="Open Class Words Table",
                         command=lambda: controller.show_frame(PageFour))
         txtbox = ttk.Entry(self, width=5)
 
         btn.pack(side=tk.TOP)
         btn2.pack(side=tk.TOP)
         btn3.pack(side=tk.TOP)
-        btn4.pack(side=tk.TOP)
         txtbox.pack(side=tk.TOP)
 
         df1 = DataFrame(self.freq.most_common(10), columns=['Token', 'Frequency'])
@@ -110,6 +109,7 @@ class PageOne(tk.Frame):
 
         MainWindow.grid_conf(self, tk.Frame)
 
+# DeReKo Stats
 class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -142,7 +142,7 @@ class PageTwo(tk.Frame):
 
         MainWindow.grid_conf(self, tk.Frame)
 
-
+# Jsyncc Weirdness
 class PageThree(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -168,12 +168,27 @@ class PageThree(tk.Frame):
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
+# Jsyncc Open Class Words
 class PageFour(tk.Frame):
+
+    # Load German language from spaCy
+    nlp = spacy.load('de_core_news_sm')
+
 
     # Token frequency distribution dictionary
     freq = PageOne.freq
     # Total tokens
     freq_length = PageOne.freq_length
+
+    # Get open class words using spaCy
+    def get_oc_words(self, join_batches):
+        oc_words = []
+        for x in join_batches:
+            line = (' '.join(''.join(x).splitlines()))
+            pos = self.nlp(line)
+            for x in pos:
+                if x.pos_ == 'NOUN':
+                    oc_words.append(x)
 
     # Returns list of the relative frequencies from batches of 10 tokens from the top 100
     # Calculated by the sum of each token in one frequency batch and each frequency divided by the total tokens
@@ -212,10 +227,18 @@ class PageFour(tk.Frame):
         # List of relative frequencies in batches of 10
         relative_freq = self.get_relative_freq(batches_freq)
 
+        #pos = self.nlp(batches_tokens)
+
+
+
         # Index for relative frequencies
         index = 0
 
         join_batches = [[''.join(x)] for x in batches_tokens]
+
+
+        self.open_class_words(join_batches)
+
         data = []
 
         # Append table data to list
@@ -227,9 +250,7 @@ class PageFour(tk.Frame):
                 index += 1
                 data.append([a, b, c])
 
-        print(relative_freq)
-
-        col_labels = ['Tokens organised in order of frequency in batches of 10 at a time', 'Relative Frequency', 'Open Class Words']
+        col_labels = ['Tokens organised in order of frequency in batches of 10 at a time', 'Relative Frequency', '$\\bf{Open Class Words}$']
         table_vals = data
 
         table = ax.table(cellText=table_vals,
