@@ -188,7 +188,10 @@ class PageFour(tk.Frame):
             pos = self.nlp(line)
             for x in pos:
                 if x.pos_ == 'NOUN':
-                    oc_words.append(x)
+                    oc_words.append(x.text)
+
+        return [x.lower() for x in oc_words]
+
 
     # Returns list of the relative frequencies from batches of 10 tokens from the top 100
     # Calculated by the sum of each token in one frequency batch and each frequency divided by the total tokens
@@ -213,7 +216,7 @@ class PageFour(tk.Frame):
         btn.pack()
         btn2.pack()
 
-        f = Figure(figsize=(8, 5), dpi=100)
+        f = Figure(figsize=(10, 5), dpi=100)
         ax = f.add_subplot(111)
 
         # List of top 100 tokens - only frequencies
@@ -227,18 +230,25 @@ class PageFour(tk.Frame):
         # List of relative frequencies in batches of 10
         relative_freq = self.get_relative_freq(batches_freq)
 
-        #pos = self.nlp(batches_tokens)
+        oc_words = self.get_oc_words([[''.join(x)] for x in batches_tokens])
+        oc_freq = []
+        noun = 0
 
 
+        for x in batches_tokens:
+            for i, y in enumerate(x):
+                if y.rstrip() in oc_words:
+                    noun +=1
+                    x[i] = '$\\bf{' + y + '}$'
+            oc_freq.append(noun)
+            noun = 0
+        print(oc_freq)
 
-        # Index for relative frequencies
-        index = 0
 
         join_batches = [[''.join(x)] for x in batches_tokens]
 
-
-        self.open_class_words(join_batches)
-
+        # Index for relative frequencies
+        index = 0
         data = []
 
         # Append table data to list
@@ -246,11 +256,11 @@ class PageFour(tk.Frame):
             for y in x:
                 a = ','.join(y.lower().splitlines())
                 b = str(float(round(relative_freq[index], 2))) + '%'
-                c = ''
+                c = oc_freq[index]
                 index += 1
                 data.append([a, b, c])
 
-        col_labels = ['Tokens organised in order of frequency in batches of 10 at a time', 'Relative Frequency', '$\\bf{Open Class Words}$']
+        col_labels = ['Tokens organised in order of frequency in batches of 10 at a time', 'Relative Frequency', 'Open Class Words']
         table_vals = data
 
         table = ax.table(cellText=table_vals,
